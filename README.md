@@ -4,6 +4,9 @@ SERGIO CAAMAÑO ARANGO
 SANTIAGO ORDOÑEZ CARRILLO
 MARIA JOSE ROJAS RUIZ
 
+USUARIO ADMIN: admin@tauros.com
+CONTRASEÑA: admin123
+
 Aplicación móvil para gestión de citas de barbería, construida con **React Native + Expo** y **Supabase** como backend.
 
 ---
