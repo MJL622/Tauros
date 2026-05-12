@@ -8,7 +8,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
+  Modal,
 } from 'react-native'
 import { useBooking } from '../hooks/useBooking'
 import { globalStyles, COLORS } from '../styles/globalStyles'
@@ -22,6 +22,13 @@ export default function BookingScreen({ route, navigation }) {
   const [nameError, setNameError] = useState('')
   const [phoneError, setPhoneError] = useState('')
 
+  // Modal de error
+  const [errorModal, setErrorModal] = useState({ visible: false, title: '', message: '', isOccupied: false })
+
+  const showError = (title, message, isOccupied = false) => {
+    setErrorModal({ visible: true, title, message, isOccupied })
+  }
+
   const validate = () => {
     let valid = true
     if (!clientName.trim()) { setNameError('Ingresa tu nombre completo.'); valid = false }
@@ -34,24 +41,18 @@ export default function BookingScreen({ route, navigation }) {
   const handleConfirm = async () => {
     if (!validate()) return
 
-    const result = await book({
-      barberId: barber.id,
-      date,
-      time,
-      clientName,
-      clientPhone,
-    })
+    const result = await book({ barberId: barber.id, date, time, clientName, clientPhone })
 
     if (result.success) {
       navigation.navigate('Confirmation', {
-        barber,
-        date,
-        time,
+        barber, date, time,
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
       })
+    } else if (result.error?.includes('ya fue reservado') || result.isOccupied) {
+      showError('Horario no disponible', 'Este horario ya fue reservado por otra persona. Por favor elige otro.', true)
     } else {
-      Alert.alert('Error al confirmar', result.error ?? 'No se pudo crear la cita. Intenta de nuevo.')
+      showError('Error al confirmar', result.error ?? 'No se pudo crear la cita. Intenta de nuevo.')
     }
   }
 
@@ -104,6 +105,52 @@ export default function BookingScreen({ route, navigation }) {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* ── Modal de error ── */}
+      <Modal
+        visible={errorModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setErrorModal(e => ({ ...e, visible: false }))}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.box}>
+            {/* Icono */}
+            <View style={[
+              modalStyles.iconCircle,
+              { borderColor: errorModal.isOccupied ? COLORS.pending : COLORS.cancelled }
+            ]}>
+              <Text style={modalStyles.iconText}>
+                {errorModal.isOccupied ? '🔒' : '⚠️'}
+              </Text>
+            </View>
+
+            <Text style={modalStyles.title}>{errorModal.title}</Text>
+            <Text style={modalStyles.message}>{errorModal.message}</Text>
+
+            {errorModal.isOccupied ? (
+              // Slot ocupado — volver a elegir hora
+              <TouchableOpacity
+                style={globalStyles.primaryBtn}
+                onPress={() => {
+                  setErrorModal(e => ({ ...e, visible: false }))
+                  navigation.goBack() // vuelve a TimeSlotScreen
+                }}
+              >
+                <Text style={globalStyles.primaryBtnText}>Elegir otro horario</Text>
+              </TouchableOpacity>
+            ) : (
+              // Error genérico — solo cerrar
+              <TouchableOpacity
+                style={globalStyles.primaryBtn}
+                onPress={() => setErrorModal(e => ({ ...e, visible: false }))}
+              >
+                <Text style={globalStyles.primaryBtnText}>Entendido</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   )
 }
@@ -130,6 +177,52 @@ const summaryStyles = StyleSheet.create({
   icon: { fontSize: 16, width: 24 },
   label: { fontSize: 14, color: COLORS.textSecondary, width: 60 },
   value: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600', flex: 1 },
+})
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  box: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 28,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  iconText: {
+    fontSize: 32,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  message: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
 })
 
 const styles = StyleSheet.create({

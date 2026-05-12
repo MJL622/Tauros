@@ -21,6 +21,12 @@ export function useBooking() {
     setLoading(false)
 
     if (error) {
+      // Error de duplicado — el slot ya fue tomado por otra persona
+      if (error.code === '23505') {
+        const msg = 'Este horario ya fue reservado. Por favor elige otro.'
+        setError(msg)
+        return { success: false, error: msg }
+      }
       setError(error.message)
       return { success: false, error: error.message }
     }

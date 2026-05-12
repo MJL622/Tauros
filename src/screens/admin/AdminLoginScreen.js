@@ -9,32 +9,45 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { verifyAdmin } from '../../services/supabaseService'
 import { globalStyles, COLORS } from '../../styles/globalStyles'
 
-const ADMIN_PASSWORD_KEY = 'admin_session'
+const ADMIN_SESSION_KEY = 'admin_session'
 
 export default function AdminLoginScreen({ navigation }) {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const handleLogin = async () => {
-    if (!password.trim()) {
-      Alert.alert('Campo requerido', 'Ingresa la contraseña.')
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Campos requeridos', 'Ingresa tu correo y contraseña.')
       return
     }
     setLoading(true)
-    const adminPassword = process.env.EXPO_PUBLIC_ADMIN_PASSWORD
-    if (password !== adminPassword) {
-      setLoading(false)
-      Alert.alert('Acceso denegado', 'Contraseña incorrecta.')
+
+    const { data, error } = await verifyAdmin(email, password)
+
+    if (error) {
+      console.log('verifyAdmin error:', JSON.stringify(error))
+    }
+    console.log('verifyAdmin data:', JSON.stringify(data))
+
+    setLoading(false)
+
+    // data es un array — la función RPC retorna filas
+    if (error || !data || data.length === 0) {
+      Alert.alert('Acceso denegado', 'Correo o contraseña incorrectos.')
       return
     }
-    await AsyncStorage.setItem(ADMIN_PASSWORD_KEY, 'true')
-    setLoading(false)
+
+    const admin = data[0]
+    await AsyncStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ id: admin.id, name: admin.name, email: admin.email }))
     navigation.replace('AdminStack')
   }
 
@@ -45,9 +58,24 @@ export default function AdminLoginScreen({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.card}>
-          <Text style={styles.icon}>🔐</Text>
+          <Image
+            source={require('../../../assets/logotauros.jpg.jpeg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.brandTitle}>TAUROS BARBERÍA</Text>
           <Text style={styles.title}>Acceso Administrador</Text>
+
+          <Text style={globalStyles.label}>Correo</Text>
+          <TextInput
+            style={globalStyles.input}
+            placeholder="admin@tauros.com"
+            placeholderTextColor="#555"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
           <Text style={globalStyles.label}>Contraseña</Text>
           <View style={styles.passwordRow}>
@@ -105,10 +133,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  icon: {
-    fontSize: 40,
-    textAlign: 'center',
-    marginBottom: 8,
+  logo: {
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   brandTitle: {
     fontSize: 14,

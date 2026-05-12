@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Image,
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { getAppointments, getAllBarbers } from '../../services/supabaseService'
@@ -65,7 +66,14 @@ export default function AdminDashboardScreen({ navigation }) {
     <ScrollView style={globalStyles.container} contentContainerStyle={styles.content}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <Text style={styles.screenTitle}>≡  Dashboard</Text>
+        <View style={styles.topBarLeft}>
+          <Image
+            source={require('../../../assets/logotauros.jpg.jpeg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.screenTitle}>Dashboard</Text>
+        </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
           <Text style={styles.logoutText}>Salir</Text>
         </TouchableOpacity>
@@ -178,6 +186,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   screenTitle: {
     fontSize: 22,

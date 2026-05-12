@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useBarbers } from '../hooks/useBarbers'
 import BarberCard from '../components/BarberCard'
@@ -35,9 +35,16 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={globalStyles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>✂  TAUROS BARBERÍA</Text>
-          <Text style={styles.headerSub}>Elige tu barbero</Text>
+        <View style={styles.headerLeft}>
+          <Image
+            source={require('../../assets/logotauros.jpg.jpeg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View>
+            <Text style={styles.headerTitle}>TAUROS BARBERÍA</Text>
+            <Text style={styles.headerSub}>Elige tu barbero</Text>
+          </View>
         </View>
         <TouchableOpacity
           style={styles.adminBtn}
@@ -81,8 +88,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logo: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     letterSpacing: 1,

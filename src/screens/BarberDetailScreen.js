@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
 import { globalStyles, COLORS } from '../styles/globalStyles'
+import { getBarberPhoto } from '../utils/barberPhotos'
 
 // Month names in Spanish
 const MONTHS = [
@@ -25,6 +26,12 @@ function toDateStr(date) {
 
 export default function BarberDetailScreen({ route, navigation }) {
   const { barber } = route.params
+  const localPhoto = getBarberPhoto(barber.name)
+  const photoSource = localPhoto
+    ? localPhoto
+    : barber.photo_url
+      ? { uri: barber.photo_url }
+      : null
 
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -62,9 +69,13 @@ export default function BarberDetailScreen({ route, navigation }) {
     <ScrollView style={globalStyles.container} contentContainerStyle={styles.content}>
       {/* Barber header */}
       <View style={styles.barberHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{barber.name?.charAt(0).toUpperCase()}</Text>
-        </View>
+        {photoSource ? (
+          <Image source={photoSource} style={styles.avatar} resizeMode="cover" />
+        ) : (
+          <View style={[styles.avatar, styles.avatarFallback]}>
+            <Text style={styles.avatarText}>{barber.name?.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
         <Text style={styles.barberName}>{barber.name}</Text>
         {barber.specialty ? (
           <Text style={styles.barberSpecialty}>{barber.specialty}</Text>
@@ -161,13 +172,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+  },
+  avatarFallback: {
     backgroundColor: '#3a3a3a',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
   },
   avatarText: {
     fontSize: 30,

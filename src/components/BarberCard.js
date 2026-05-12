@@ -1,14 +1,27 @@
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native'
+import { TouchableOpacity, Text, View, Image, StyleSheet } from 'react-native'
 import { COLORS } from '../styles/globalStyles'
+import { getBarberPhoto } from '../utils/barberPhotos'
 
 export default function BarberCard({ barber, onPress }) {
+  const localPhoto = getBarberPhoto(barber.name)
+  const photoSource = localPhoto
+    ? localPhoto
+    : barber.photo_url
+      ? { uri: barber.photo_url }
+      : null
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
-          {barber.name?.charAt(0).toUpperCase() ?? '?'}
-        </Text>
-      </View>
+      {photoSource ? (
+        <Image source={photoSource} style={styles.avatar} resizeMode="cover" />
+      ) : (
+        <View style={[styles.avatar, styles.avatarFallback]}>
+          <Text style={styles.avatarText}>
+            {barber.name?.charAt(0).toUpperCase() ?? '?'}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.info}>
         <Text style={styles.name}>{barber.name}</Text>
         {barber.specialty ? (
@@ -32,22 +45,22 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 14,
+  },
+  avatarFallback: {
     backgroundColor: '#3a3a3a',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
   },
   avatarText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.gold,
   },
-  info: {
-    flex: 1,
-  },
+  info: { flex: 1 },
   name: {
     fontSize: 16,
     fontWeight: '700',

@@ -27,7 +27,7 @@ const DEFAULT_SCHEDULE = DAYS.map((d) => ({
   day_of_week: d.key,
   start_time: '09:00',
   end_time: '18:00',
-  slot_duration: 30,
+  slot_duration: 60,
   is_active: d.key >= 1 && d.key <= 5,
 }))
 

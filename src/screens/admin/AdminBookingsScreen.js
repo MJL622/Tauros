@@ -11,7 +11,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native'
-import { getAppointments, getAllBarbers, updateAppointmentStatus } from '../../services/supabaseService'
+import { getAppointments, getAllBarbers, updateAppointmentStatus, deleteOldAppointments } from '../../services/supabaseService'
 import { globalStyles, COLORS } from '../../styles/globalStyles'
 
 const STATUS_CONFIG = {
@@ -54,6 +54,31 @@ export default function AdminBookingsScreen() {
     setFilterDate('')
     setFilterBarber('all')
     fetchAppointments('all', '')
+  }
+
+  const handleCleanOld = () => {
+    Alert.alert(
+      'Limpiar citas pasadas',
+      '¿Eliminar todas las citas de fechas anteriores a hoy? Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await deleteOldAppointments()
+            if (error) {
+              Alert.alert('Error', error.message)
+            } else {
+              Alert.alert('Listo', 'Citas pasadas eliminadas correctamente.')
+              fetchAppointments('all', '')
+              setFilterDate('')
+              setFilterBarber('all')
+            }
+          },
+        },
+      ]
+    )
   }
 
   const handleStatusChange = (id, newStatus, label) => {
@@ -188,9 +213,13 @@ export default function AdminBookingsScreen() {
             <Text style={globalStyles.primaryBtnText}>Aplicar</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[globalStyles.secondaryBtn, { flex: 1 }]} onPress={clearFilters}>
-            <Text style={globalStyles.secondaryBtnText}>Limpiar</Text>
+            <Text style={globalStyles.secondaryBtnText}>Limpiar filtros</Text>
           </TouchableOpacity>
         </View>
+        {/* Botón limpiar citas pasadas */}
+        <TouchableOpacity style={styles.cleanBtn} onPress={handleCleanOld}>
+          <Text style={styles.cleanBtnText}>🗑 Eliminar citas pasadas</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -285,6 +314,20 @@ const styles = StyleSheet.create({
   filterActions: {
     flexDirection: 'row',
     gap: 10,
+  },
+  cleanBtn: {
+    backgroundColor: COLORS.cancelled + '18',
+    borderWidth: 1,
+    borderColor: COLORS.cancelled + '55',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  cleanBtnText: {
+    color: COLORS.cancelled,
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   list: { padding: 16, paddingBottom: 40 },

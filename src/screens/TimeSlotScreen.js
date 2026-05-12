@@ -30,6 +30,28 @@ export default function TimeSlotScreen({ route, navigation }) {
     fetchSlots(barber.id, date)
   }, [barber.id, date])
 
+  // Ocultar slots pasados (si es hoy) y slots ocupados
+  const visibleSlots = (() => {
+    const today = new Date().toISOString().split('T')[0]
+    const isToday = date === today
+
+    const now = new Date()
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+    return slots.filter((slot) => {
+      // Ocultar ocupados
+      if (!slot.is_available) return false
+
+      // Ocultar pasados solo si es hoy
+      if (isToday) {
+        const [h, m] = slot.slot_time.split(':').map(Number)
+        if (h * 60 + m <= currentMinutes) return false
+      }
+
+      return true
+    })
+  })()
+
   const handleSlotPress = (slot) => {
     navigation.navigate('Booking', { barber, date, time: slot.slot_time })
   }
@@ -54,16 +76,20 @@ export default function TimeSlotScreen({ route, navigation }) {
         <Text style={styles.errorText}>Error al cargar horarios: {error}</Text>
       )}
 
-      {!loading && !error && slots.length === 0 && (
+      {!loading && !error && visibleSlots.length === 0 && (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No hay horarios disponibles para este día.</Text>
+          <Text style={styles.emptyText}>
+            {slots.length > 0
+              ? 'No quedan horarios disponibles para hoy.'
+              : 'No hay horarios disponibles para este día.'}
+          </Text>
         </View>
       )}
 
-      {!loading && slots.length > 0 && (
+      {!loading && visibleSlots.length > 0 && (
         <>
           <View style={styles.slotsGrid}>
-            {slots.map((slot, i) => (
+            {visibleSlots.map((slot, i) => (
               <TimeSlotButton
                 key={i}
                 slot={slot}
@@ -77,10 +103,6 @@ export default function TimeSlotScreen({ route, navigation }) {
             <View style={styles.legendItem}>
               <View style={[styles.legendBox, { borderColor: COLORS.available, backgroundColor: COLORS.card }]} />
               <Text style={styles.legendText}>Disponible</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendBox, { borderColor: COLORS.border, backgroundColor: '#2a2a2a' }]} />
-              <Text style={styles.legendText}>Ocupado</Text>
             </View>
           </View>
         </>
